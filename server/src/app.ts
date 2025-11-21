@@ -25,8 +25,12 @@ app.set("trust proxy", 1);
 app.use(
   cors({
     origin: (origin, callback) => {
-      if (!origin || !allowedOrigins?.length) {
+      if (!origin) {
         return callback(null, true);
+      }
+
+      if (!allowedOrigins?.length) {
+        return callback(new Error("Origin not allowed by CORS policy"));
       }
 
       return allowedOrigins.includes(origin) ? callback(null, true) : callback(new Error("Not allowed by CORS"));

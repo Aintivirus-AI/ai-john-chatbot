@@ -34,7 +34,14 @@ function shouldRateLimit(path: string) {
 }
 
 function getClientKey(req: Request) {
-  return req.header("x-api-key")?.trim() || req.ip || "anonymous";
+  const forwardedFor = req.headers["x-forwarded-for"];
+  if (typeof forwardedFor === "string" && forwardedFor.length > 0) {
+    return forwardedFor.split(",")[0].trim();
+  }
+  if (Array.isArray(forwardedFor) && forwardedFor.length > 0) {
+    return forwardedFor[0];
+  }
+  return req.ip || req.socket.remoteAddress || "anonymous";
 }
 
 export function rateLimitMiddleware(req: Request, res: Response, next: NextFunction) {

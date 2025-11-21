@@ -26,7 +26,10 @@ export async function searchBackedPersonaResponse(
       text: options?.fallbackMessage ?? DEFAULT_SEARCH_FALLBACK,
       model: config.openAiModel,
       citations: [],
-      usage: undefined
+      usage: undefined,
+      meta: {
+        usedFallback: true
+      }
     };
   }
 }

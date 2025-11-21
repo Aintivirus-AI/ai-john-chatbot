@@ -6,6 +6,7 @@ import { generatePersonaResponse } from "../lib/openai.js";
 import type { PersonaMessage, PersonaResponse } from "../lib/openai.js";
 import { searchBackedPersonaResponse } from "../lib/search.js";
 import { logger } from "../logger.js";
+import { needsFreshAnswer } from "../lib/freshness.js";
 
 const router = Router();
 
@@ -94,8 +95,13 @@ router.post("/", async (req, res) => {
       enableSearch: shouldSearch
     });
 
-    const cacheKey = res.locals.cacheKey ?? buildCacheKey(trimmedMessages);
-    setCachedPersonaResponse(cacheKey, personaResponse);
+    const shouldCacheResponse =
+      res.locals.shouldCache !== false && !shouldSearch && !personaResponse.meta?.usedFallback;
+
+    if (shouldCacheResponse) {
+      const cacheKey = res.locals.cacheKey ?? buildCacheKey(trimmedMessages);
+      setCachedPersonaResponse(cacheKey, personaResponse);
+    }
 
     const { citations: _citations, ...rest } = personaResponse;
 
@@ -128,27 +134,6 @@ async function getPersonaResponse(
     temperature: options.temperature,
     maxOutputTokens: options.maxOutputTokens
   });
-}
-
-const FRESH_KEYWORDS = [
-  "today",
-  "tonight",
-  "now",
-  "current",
-  "latest",
-  "news",
-  "price",
-  "market",
-  "update",
-  "recent",
-  "trend",
-  "breaking",
-  "live"
-];
-
-function needsFreshAnswer(input: string): boolean {
-  const normalized = input.toLowerCase();
-  return FRESH_KEYWORDS.some((keyword) => normalized.includes(keyword));
 }
 
 function limitMessages(messages: PersonaMessage[]): PersonaMessage[] {

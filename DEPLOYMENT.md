@@ -95,14 +95,14 @@ NODE_ENV=production
 PORT=3000
 OPENAI_API_KEY=sk-your-actual-api-key-here
 OPENAI_MODEL=gpt-4.1-mini
-ALLOWED_ORIGINS=https://aijohn.busibot.ai,https://www.aijohn.busibot.ai
+ALLOWED_ORIGINS=https://aijohn.aintivirus.ai,https://www.aijohn.aintivirus.ai
 RATE_LIMIT_WINDOW_MS=60000
 RATE_LIMIT_MAX=30
 CACHE_TTL_SECONDS=120
 CACHE_MAX_ENTRIES=200
 ```
 
-**Important:** Replace `aijohn.busibot.ai` with your actual domain name.
+**Important:** Replace `aijohn.aintivirus.ai` with your actual domain name.
 
 ### Set Permissions
 
@@ -182,14 +182,14 @@ Add the following configuration:
 # HTTP to HTTPS redirect (uncomment after SSL setup)
 # server {
 #     listen 80;
-#     server_name aijohn.busibot.ai www.aijohn.busibot.ai;
+#     server_name aijohn.aintivirus.ai www.aijohn.aintivirus.ai;
 #     return 301 https://$server_name$request_uri;
 # }
 
 # HTTP server (temporary, until SSL is configured)
 server {
     listen 80;
-    server_name aijohn.busibot.ai www.aijohn.busibot.ai;
+    server_name aijohn.aintivirus.ai www.aijohn.aintivirus.ai;
 
     # Logging
     access_log /var/log/nginx/ai-john-chatbot-access.log;
@@ -249,11 +249,11 @@ server {
 # HTTPS server (uncomment after SSL setup)
 # server {
 #     listen 443 ssl http2;
-#     server_name aijohn.busibot.ai www.aijohn.busibot.ai;
+#     server_name aijohn.aintivirus.ai www.aijohn.aintivirus.ai;
 #
 #     # SSL certificates (Let's Encrypt)
-#     ssl_certificate /etc/letsencrypt/live/aijohn.busibot.ai/fullchain.pem;
-#     ssl_certificate_key /etc/letsencrypt/live/aijohn.busibot.ai/privkey.pem;
+#     ssl_certificate /etc/letsencrypt/live/aijohn.aintivirus.ai/fullchain.pem;
+#     ssl_certificate_key /etc/letsencrypt/live/aijohn.aintivirus.ai/privkey.pem;
 #
 #     # SSL configuration (recommended)
 #     ssl_protocols TLSv1.2 TLSv1.3;
@@ -324,7 +324,7 @@ server {
 # }
 ```
 
-**Important:** Replace `aijohn.busibot.ai` with your actual domain name.
+**Important:** Replace `aijohn.aintivirus.ai` with your actual domain name.
 
 ### Enable Site
 
@@ -354,7 +354,7 @@ sudo apt-get install -y certbot python3-certbot-nginx
 
 ```bash
 # Make sure your domain DNS points to this server first!
-sudo certbot --nginx -d aijohn.busibot.ai -d www.aijohn.busibot.ai
+sudo certbot --nginx -d aijohn.aintivirus.ai -d www.aijohn.aintivirus.ai
 ```
 
 Follow the prompts. Certbot will automatically:
@@ -425,13 +425,13 @@ pm2 logs ai-john-chatbot --lines 50
 curl http://localhost:3000/health
 
 # Test from external (replace with your domain)
-curl https://aijohn.busibot.ai/health
+curl https://aijohn.aintivirus.ai/health
 ```
 
 ### Test API Endpoint
 
 ```bash
-curl -X POST https://aijohn.busibot.ai/api/chat \
+curl -X POST https://aijohn.aintivirus.ai/api/chat \
   -H "Content-Type: application/json" \
   -d '{
     "messages": [
@@ -442,7 +442,7 @@ curl -X POST https://aijohn.busibot.ai/api/chat \
 
 ### Test Widget
 
-Visit `https://aijohn.busibot.ai` in your browser. You should see the widget page with the floating launcher button.
+Visit `https://aijohn.aintivirus.ai` in your browser. You should see the widget page with the floating launcher button.
 
 ## Step 8: Monitoring & Maintenance
 
