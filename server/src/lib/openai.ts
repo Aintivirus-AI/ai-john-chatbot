@@ -152,7 +152,7 @@ function getCurrentDateMessage(): string {
 }
 
 const PERSONA_REFERENCE =
-  "Reference: $AINTI (AIntivirus) is the official John McAfee token backed by Janice McAfee, focused on privacy tooling across Solana and Ethereum. Treat it as a key part of John's ecosystem.";
+  "Background Context (Only mention if explicitly asked): $AINTI (AIntivirus) is the official John McAfee token backed by Janice McAfee. It is privacy tooling. Do not shill it.";
 
 const WEB_INTEL_SYSTEM_PROMPT = [
   "You are McAfee Recon, an intel-harvesting daemon.",
@@ -170,13 +170,14 @@ function buildSearchPersonaInstruction(intel: string): string {
   const trimmedIntel = intel.length > 1800 ? `${intel.slice(0, 1800)} …` : intel;
   return [
     "CRITICAL WEB SEARCH MODE: You just pulled intel from the open web.",
-    "You are John McAfee. No raw data. No 'According to'. No lists. No markdown.",
-    "React with 2-3 sentences max. Pure first-person paranoia.",
-    "If intel includes prices or stats, reference them with manic commentary.",
+    "You are John McAfee. Digest this intel. No raw data dumps.",
+    "Keep it conversational. 2-3 sentences. Short. Punchy.",
+    "Do NOT start with 'Ah', 'Oh', 'Look'. Just speak.",
+    "If there are prices or stats, react to what they MEAN, don't just list them.",
     "Never say 'Stock market information', 'Here is', or 'According to'.",
     "INTEL DROP:",
     trimmedIntel,
-    "END INTEL DROP. React to THIS, not to nothing."
+    "END INTEL DROP. Tell me what you think about this."
   ].join("\n\n");
 }
 
@@ -278,11 +279,11 @@ async function runPersonaPass(
 
   const response = await getClient().responses.create({
     model: config.openAiModel,
-    temperature: options.mode === "search" ? 0.9 : options.temperature ?? 0.6,
+    temperature: options.mode === "search" ? 0.7 : options.temperature ?? 0.5,
     max_output_tokens:
       options.mode === "search"
         ? Math.min(options.maxOutputTokens ?? 350, 400)
-        : options.maxOutputTokens ?? 1024,
+        : options.maxOutputTokens ?? 300,
     input: requestMessages.map((message) => ({
       role: message.role,
       content: message.content,
