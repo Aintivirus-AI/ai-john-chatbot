@@ -4,6 +4,7 @@ import type { Response, ResponseOutputMessage, ResponseOutputText } from "openai
 import { config } from "../config.js";
 import { logger } from "../logger.js";
 import { JOHN_MCAFEE_PERSONA_PROMPT } from "../prompts/persona.js";
+import { searchKnowledgeBase, formatKnowledgeContext } from "./knowledgeBase.js";
 
 export type PersonaChatRole = "user" | "assistant";
 
@@ -164,7 +165,7 @@ const WEB_INTEL_SYSTEM_PROMPT = [
 ].join(" ");
 
 const BASE_PERSONA_INSTRUCTION =
-  "When incorporating information, speak in your own voice. No bullet points, no markdown, no lists. Just your raw take.";
+  "When incorporating information from your archives or memory, speak as if you lived it. Tell the story with vivid detail. No bullet points, no markdown, no lists. Just your raw, authentic voice.";
 
 function buildSearchPersonaInstruction(intel: string): string {
   const trimmedIntel = intel.length > 1800 ? `${intel.slice(0, 1800)} …` : intel;
@@ -248,6 +249,7 @@ async function runPersonaPass(
   options: {
     mode: PersonaMode;
     intel?: string;
+    knowledgeContext?: string;
     temperature?: number;
     maxOutputTokens?: number;
   }
@@ -265,6 +267,14 @@ async function runPersonaPass(
     }
   ];
 
+  // Add knowledge base context if available
+  if (options.knowledgeContext) {
+    systemMessages.push({
+      role: "system",
+      content: `FROM YOUR ARCHIVES (your books, blogs, and memories):\n\n${options.knowledgeContext}\n\nUse this to inform your response. Speak as if you wrote this and lived these experiences. Tell the story with authentic detail.`
+    });
+  }
+
   if (options.mode === "search" && options.intel) {
     systemMessages.push({
       role: "system",
@@ -277,13 +287,17 @@ async function runPersonaPass(
 
   const requestMessages = [...systemMessages, ...messages];
 
+  // Allow longer responses when we have knowledge context to draw from
+  const hasContext = options.knowledgeContext || options.intel;
+  const defaultMaxTokens = hasContext ? 800 : 400;
+
   const response = await getClient().responses.create({
     model: config.openAiModel,
-    temperature: options.mode === "search" ? 0.7 : options.temperature ?? 0.5,
+    temperature: options.mode === "search" ? 0.7 : options.temperature ?? 0.6,
     max_output_tokens:
       options.mode === "search"
-        ? Math.min(options.maxOutputTokens ?? 350, 400)
-        : options.maxOutputTokens ?? 300,
+        ? Math.min(options.maxOutputTokens ?? 600, 800)
+        : options.maxOutputTokens ?? defaultMaxTokens,
     input: requestMessages.map((message) => ({
       role: message.role,
       content: message.content,
@@ -317,6 +331,21 @@ export async function generatePersonaResponse(
 ): Promise<PersonaResponse> {
   ensureApiKey();
 
+  // Get latest user message for knowledge base search
+  const latestUserMessage = [...messages].reverse().find((m) => m.role === "user")?.content ?? "";
+  
+  // Search knowledge base for relevant context
+  let knowledgeContext = "";
+  try {
+    const kbResults = await searchKnowledgeBase(latestUserMessage, { topK: 5, minScore: 0.35 });
+    if (kbResults.length > 0) {
+      knowledgeContext = formatKnowledgeContext(kbResults);
+      logger.info({ resultCount: kbResults.length, topScore: kbResults[0]?.score }, "Knowledge base matches found");
+    }
+  } catch (error) {
+    logger.warn({ error }, "Knowledge base search failed, continuing without context");
+  }
+
   if (options?.enableWebSearch) {
     const intelResult = await gatherWebIntel(messages, {
       maxOutputTokens: options?.maxOutputTokens
@@ -325,6 +354,7 @@ export async function generatePersonaResponse(
     const personaResult = await runPersonaPass(messages, {
       mode: "search",
       intel: intelResult.intel,
+      knowledgeContext,
       temperature: options?.temperature,
       maxOutputTokens: options?.maxOutputTokens
     });
@@ -339,6 +369,7 @@ export async function generatePersonaResponse(
 
   const personaResult = await runPersonaPass(messages, {
     mode: "default",
+    knowledgeContext,
     temperature: options?.temperature,
     maxOutputTokens: options?.maxOutputTokens
   });
