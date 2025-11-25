@@ -57,8 +57,8 @@ function getOpenAIClient(): OpenAI {
  */
 export function loadKnowledgeBase(): void {
   const dataDir = getDataDir();
-  // Load all knowledge files - events has biographical data, blogs has books/archive content
-  const files = ["events.json", "blogs.json"];
+  // Load all knowledge files - events has biographical data, blogs has books/archive content, websites has scraped site data
+  const files = ["events.json", "blogs.json", "websites.json"];
 
   knowledgeEntries = [];
 

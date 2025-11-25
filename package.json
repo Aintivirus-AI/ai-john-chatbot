@@ -8,7 +8,8 @@
     "start": "node dist/server/src/index.js",
     "build": "tsc -p tsconfig.json",
     "lint": "eslint . --ext .ts,.tsx --max-warnings=0 || exit 0",
-    "process-pdf": "tsx server/src/scripts/process-pdfs.ts"
+    "process-pdf": "tsx server/src/scripts/process-pdfs.ts",
+    "scrape-websites": "tsx server/src/scripts/scrape-websites.ts"
   },
   "dependencies": {
     "compression": "^1.7.4",
@@ -21,6 +22,7 @@
     "openai": "^4.73.0",
     "pdf-parse": "^2.4.5",
     "pino": "^9.6.0",
+    "puppeteer": "^24.31.0",
     "zod": "^3.23.8"
   },
   "devDependencies": {
