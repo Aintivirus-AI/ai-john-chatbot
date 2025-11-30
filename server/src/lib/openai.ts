@@ -165,6 +165,7 @@ function stripStructuralNoise(text: string): string {
     .replace(/^#{1,6}\s+/gm, "")
     .replace(/^[\s]*[-*•]\s+/gm, "")
     .replace(/\n{3,}/g, "\n\n")
+    .replace(/—/g, "-")
     .trim();
 }
 
