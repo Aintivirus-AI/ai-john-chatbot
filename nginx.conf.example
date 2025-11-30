@@ -1,0 +1,149 @@
+# nginx configuration for ai-john-chatbot
+# Place this file at: /etc/nginx/sites-available/ai-john-chatbot
+# Then create symlink: sudo ln -s /etc/nginx/sites-available/ai-john-chatbot /etc/nginx/sites-enabled/
+# Replace 'aijohn.aintivirus.ai' with your actual domain
+
+# HTTP to HTTPS redirect (uncomment after SSL setup)
+# server {
+#     listen 80;
+#     server_name aijohn.aintivirus.ai www.aijohn.aintivirus.ai;
+#     return 301 https://$server_name$request_uri;
+# }
+
+# HTTP server (temporary, until SSL is configured)
+server {
+    listen 80;
+    server_name aijohn.aintivirus.ai www.aijohn.aintivirus.ai;
+
+    # Logging
+    access_log /var/log/nginx/ai-john-chatbot-access.log;
+    error_log /var/log/nginx/ai-john-chatbot-error.log;
+
+    # Increase timeouts for AI responses
+    proxy_connect_timeout 60s;
+    proxy_send_timeout 60s;
+    proxy_read_timeout 60s;
+
+    # Increase body size limit (adjust as needed)
+    client_max_body_size 1M;
+
+    # Proxy API requests to Node.js application
+    location /api/ {
+        proxy_pass http://localhost:3000;
+        proxy_http_version 1.1;
+        
+        # Headers
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-Forwarded-Host $host;
+        proxy_set_header X-Forwarded-Port $server_port;
+        
+        # WebSocket support (if needed in future)
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        
+        # Buffering
+        proxy_buffering off;
+        proxy_request_buffering off;
+    }
+
+    # Health check endpoint
+    location /health {
+        proxy_pass http://localhost:3000/health;
+        proxy_set_header Host $host;
+        access_log off;
+    }
+
+    # Serve widget static files
+    location / {
+        root /var/www/ai-john-chatbot/web/widget;
+        try_files $uri $uri/ /index.html;
+        index index.html;
+        
+        # Cache static assets
+        location ~* \.(jpg|jpeg|png|gif|ico|css|js)$ {
+            expires 30d;
+            add_header Cache-Control "public, immutable";
+        }
+    }
+}
+
+# HTTPS server (uncomment after SSL setup with Let's Encrypt)
+# server {
+#     listen 443 ssl http2;
+#     server_name aijohn.aintivirus.ai www.aijohn.aintivirus.ai;
+#
+#     # SSL certificates (Let's Encrypt)
+#     ssl_certificate /etc/letsencrypt/live/aijohn.aintivirus.ai/fullchain.pem;
+#     ssl_certificate_key /etc/letsencrypt/live/aijohn.aintivirus.ai/privkey.pem;
+#
+#     # SSL configuration (recommended)
+#     ssl_protocols TLSv1.2 TLSv1.3;
+#     ssl_ciphers HIGH:!aNULL:!MD5;
+#     ssl_prefer_server_ciphers on;
+#     ssl_session_cache shared:SSL:10m;
+#     ssl_session_timeout 10m;
+#
+#     # Security headers
+#     add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
+#     add_header X-Frame-Options "SAMEORIGIN" always;
+#     add_header X-Content-Type-Options "nosniff" always;
+#     add_header X-XSS-Protection "1; mode=block" always;
+#
+#     # Logging
+#     access_log /var/log/nginx/ai-john-chatbot-access.log;
+#     error_log /var/log/nginx/ai-john-chatbot-error.log;
+#
+#     # Increase timeouts for AI responses
+#     proxy_connect_timeout 60s;
+#     proxy_send_timeout 60s;
+#     proxy_read_timeout 60s;
+#
+#     # Increase body size limit
+#     client_max_body_size 1M;
+#
+#     # Proxy API requests to Node.js application
+#     location /api/ {
+#         proxy_pass http://localhost:3000;
+#         proxy_http_version 1.1;
+#         
+#         # Headers
+#         proxy_set_header Host $host;
+#         proxy_set_header X-Real-IP $remote_addr;
+#         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+#         proxy_set_header X-Forwarded-Proto $scheme;
+#         proxy_set_header X-Forwarded-Host $host;
+#         proxy_set_header X-Forwarded-Port $server_port;
+#         
+#         # WebSocket support
+#         proxy_set_header Upgrade $http_upgrade;
+#         proxy_set_header Connection "upgrade";
+#         
+#         # Buffering
+#         proxy_buffering off;
+#         proxy_request_buffering off;
+#     }
+#
+#     # Health check endpoint
+#     location /health {
+#         proxy_pass http://localhost:3000/health;
+#         proxy_set_header Host $host;
+#         access_log off;
+#     }
+#
+#     # Serve widget static files
+#     location / {
+#         root /var/www/ai-john-chatbot/web/widget;
+#         try_files $uri $uri/ /index.html;
+#         index index.html;
+#         
+#         # Cache static assets
+#         location ~* \.(jpg|jpeg|png|gif|ico|css|js)$ {
+#             expires 30d;
+#             add_header Cache-Control "public, immutable";
+#         }
+#     }
+# }
+

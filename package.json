@@ -1,0 +1,41 @@
+{
+  "name": "aintivirus-ai-john",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx server/src/index.ts",
+    "start": "node dist/server/src/index.js",
+    "build": "tsc -p tsconfig.json",
+    "lint": "eslint . --ext .ts,.tsx --max-warnings=0 || exit 0",
+    "process-pdf": "tsx server/src/scripts/process-pdfs.ts",
+    "scrape-websites": "tsx server/src/scripts/scrape-websites.ts"
+  },
+  "dependencies": {
+    "compression": "^1.7.4",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "helmet": "^7.1.0",
+    "lru-cache": "^11.0.1",
+    "morgan": "^1.10.0",
+    "openai": "^4.73.0",
+    "pdf-parse": "^2.4.5",
+    "pino": "^9.6.0",
+    "puppeteer": "^24.31.0",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/compression": "^1.7.5",
+    "@types/cors": "^2.8.17",
+    "@types/express": "^4.17.21",
+    "@types/morgan": "^1.9.9",
+    "@types/node": "^22.0.0",
+    "pino-pretty": "^11.2.2",
+    "tsx": "^4.19.1",
+    "typescript": "^5.6.2"
+  },
+  "engines": {
+    "node": ">=20.11.0"
+  }
+}
