@@ -219,7 +219,7 @@ export async function registerWebhook(webhookUrl: string): Promise<boolean> {
     body: JSON.stringify(params)
   });
 
-  const result = await response.json();
+  const result = await response.json() as { ok: boolean; description?: string };
   
   if (!result.ok) {
     logger.error({ result }, "Failed to register Telegram webhook");
