@@ -17,7 +17,12 @@ const envSchema = z.object({
   RATE_LIMIT_WINDOW_MS: z.coerce.number().int().positive().default(60_000),
   RATE_LIMIT_MAX: z.coerce.number().int().min(1).default(30),
   CACHE_TTL_SECONDS: z.coerce.number().int().min(30).default(120),
-  CACHE_MAX_ENTRIES: z.coerce.number().int().min(10).default(200)
+  CACHE_MAX_ENTRIES: z.coerce.number().int().min(10).default(200),
+  // Telegram bot configuration
+  TELEGRAM_BOT_TOKEN: z.string().optional(),
+  TELEGRAM_WEBHOOK_SECRET: z.string().optional(),
+  TELEGRAM_MAX_HISTORY: z.coerce.number().int().min(2).max(20).default(10),
+  TELEGRAM_SESSION_TTL_MINUTES: z.coerce.number().int().min(5).max(1440).default(60)
 });
 
 const parsed = envSchema.safeParse(process.env);
@@ -55,6 +60,12 @@ export const config = {
   cache: {
     ttlMs: env.CACHE_TTL_SECONDS * 1000,
     maxEntries: env.CACHE_MAX_ENTRIES
+  },
+  telegram: {
+    botToken: env.TELEGRAM_BOT_TOKEN,
+    webhookSecret: env.TELEGRAM_WEBHOOK_SECRET,
+    maxHistory: env.TELEGRAM_MAX_HISTORY,
+    sessionTtlMs: env.TELEGRAM_SESSION_TTL_MINUTES * 60 * 1000
   }
 };
 
