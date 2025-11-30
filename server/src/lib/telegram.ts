@@ -8,6 +8,9 @@ import type { PersonaMessage } from "./openai.js";
 
 const TELEGRAM_API_BASE = "https://api.telegram.org/bot";
 
+// Cache the bot's username after first fetch
+let cachedBotUsername: string | null = null;
+
 interface TelegramUser {
   id: number;
   first_name: string;
@@ -73,6 +76,53 @@ async function sendMessage(chatId: number, text: string): Promise<void> {
 }
 
 /**
+ * Get the bot's username (cached after first call)
+ */
+async function getBotUsername(): Promise<string | null> {
+  if (cachedBotUsername) {
+    return cachedBotUsername;
+  }
+
+  const token = config.telegram.botToken;
+  if (!token) return null;
+
+  try {
+    const response = await fetch(`${TELEGRAM_API_BASE}${token}/getMe`);
+    const result = await response.json() as { ok: boolean; result?: { username?: string } };
+    
+    if (result.ok && result.result?.username) {
+      cachedBotUsername = result.result.username.toLowerCase();
+      return cachedBotUsername;
+    }
+  } catch (error) {
+    logger.warn({ error }, "Failed to fetch bot username");
+  }
+
+  return null;
+}
+
+/**
+ * Check if this is a group chat
+ */
+function isGroupChat(chatType: string): boolean {
+  return chatType === "group" || chatType === "supergroup";
+}
+
+/**
+ * Check if the bot is mentioned in the message and strip the mention
+ */
+function extractMentionedMessage(text: string, botUsername: string): string | null {
+  const mentionPattern = new RegExp(`@${botUsername}\\b`, "gi");
+  
+  if (!mentionPattern.test(text)) {
+    return null; // Bot not mentioned
+  }
+
+  // Strip the mention and clean up extra spaces
+  return text.replace(mentionPattern, "").trim().replace(/\s+/g, " ");
+}
+
+/**
  * Send a "typing" indicator to show the bot is processing
  */
 async function sendTypingIndicator(chatId: number): Promise<void> {
@@ -122,23 +172,56 @@ export async function processUpdate(update: TelegramUpdate): Promise<void> {
   }
 
   const chatId = message.chat.id;
-  const userId = String(message.from.id);
-  const text = message.text.trim();
+  const chatType = message.chat.type;
+  const isGroup = isGroupChat(chatType);
+  
+  // Use chat ID for conversation context (shared in groups, private in DMs)
+  const conversationId = String(chatId);
+  
+  let text = message.text.trim();
+
+  // In groups, only respond when mentioned
+  if (isGroup) {
+    const botUsername = await getBotUsername();
+    
+    if (!botUsername) {
+      logger.warn("Could not determine bot username for group mention check");
+      return;
+    }
+
+    const extractedText = extractMentionedMessage(text, botUsername);
+    
+    if (extractedText === null) {
+      // Bot not mentioned, ignore in groups
+      logger.debug({ chatId }, "Ignoring group message - bot not mentioned");
+      return;
+    }
+
+    text = extractedText;
+    
+    // If mention was the entire message, prompt them to ask something
+    if (!text) {
+      await sendMessage(chatId, "You rang? What's on your mind?");
+      return;
+    }
+  }
 
   logger.info(
-    { userId, chatId, messageLength: text.length },
+    { conversationId, chatId, isGroup, messageLength: text.length },
     "Processing Telegram message"
   );
 
-  // Handle commands
-  if (text.startsWith("/start")) {
-    const response = handleStartCommand(userId);
+  // Handle commands (strip bot mention from commands in groups)
+  const commandText = text.replace(/^\/(\w+)@\w+/, "/$1"); // /start@BotName -> /start
+  
+  if (commandText.startsWith("/start")) {
+    const response = handleStartCommand(conversationId);
     await sendMessage(chatId, response);
     return;
   }
 
-  if (text.startsWith("/clear")) {
-    const response = handleClearCommand(userId);
+  if (commandText.startsWith("/clear")) {
+    const response = handleClearCommand(conversationId);
     await sendMessage(chatId, response);
     return;
   }
@@ -148,7 +231,7 @@ export async function processUpdate(update: TelegramUpdate): Promise<void> {
 
   try {
     // Get conversation history and add new message
-    const history = getConversation(userId);
+    const history = getConversation(conversationId);
     const userMessage: PersonaMessage = { role: "user", content: text };
     const messages = [...history, userMessage];
 
@@ -161,18 +244,18 @@ export async function processUpdate(update: TelegramUpdate): Promise<void> {
       : await generatePersonaResponse(messages);
 
     // Store messages in history
-    addMessage(userId, userMessage);
-    addMessage(userId, { role: "assistant", content: personaResponse.text });
+    addMessage(conversationId, userMessage);
+    addMessage(conversationId, { role: "assistant", content: personaResponse.text });
 
     // Send response
     await sendMessage(chatId, personaResponse.text);
 
     logger.info(
-      { userId, responseLength: personaResponse.text.length, usedSearch: shouldSearch },
+      { conversationId, isGroup, responseLength: personaResponse.text.length, usedSearch: shouldSearch },
       "Sent Telegram response"
     );
   } catch (error) {
-    logger.error({ error, userId }, "Failed to process Telegram message");
+    logger.error({ error, conversationId }, "Failed to process Telegram message");
     await sendMessage(
       chatId,
       "Something went sideways in the matrix. Give it another shot."
