@@ -26,19 +26,51 @@
   const DEFAULTS = {
     endpoint: "http://localhost:3000/api/chat",
     title: "Chat with John",
-    subtitle: null, // Will be set dynamically to a random quote
+    subtitle: null,
     accentColor: "#0066FF",
     backgroundColor: "#0f172a",
     textColor: "#e2e8f0",
-    launcherImage: "ai-john.jpg",
+    launcherImage: "https://ai-bot.aintivirus.ai/ai-john.jpg",
     glowColor: "#00CCFF",
-    assistantAvatar: "binary-john.jpg"
+    assistantAvatar: "https://ai-bot.aintivirus.ai/binary-john.jpg"
   };
 
-  if (!document.getElementById(STYLE_ID)) {
+  const WELCOME_MESSAGES = [
+    "John here. Ask me anything—crypto strategy, privacy ops, or the latest digital mischief.",
+    "McAfee here. What do you want to know? Crypto moves, privacy hacks, or how the system really works?",
+    "John speaking. Fire away—crypto intel, privacy tactics, or whatever digital chaos you're curious about.",
+    "You've got John. Crypto insights, privacy strategies, or the truth about what's happening in the digital underground?",
+    "McAfee here. Ready to talk crypto, privacy, or the latest tech that's shaking things up?",
+    "John here. What's on your mind? Crypto plays, privacy tools, or the real story behind the headlines?",
+    "You're talking to John. Crypto strategy, privacy ops, or the digital world's latest moves—what do you need?",
+    "McAfee speaking. Crypto intel, privacy hacks, or the tech that's actually changing the game?",
+    "John here. Ask me about crypto, privacy, or whatever digital frontier you're exploring.",
+    "McAfee here. Crypto moves, privacy tactics, or the latest in digital disruption—what's your question?",
+    "John speaking. Crypto strategy, privacy tools, or the real tech that matters—what do you want to know?",
+    "You've got McAfee. Crypto insights, privacy ops, or the digital underground—fire away."
+  ];
+
+  // Create shadow host
+  let shadowHost = document.getElementById("john-mcafee-widget-host");
+  if (!shadowHost) {
+    shadowHost = document.createElement("div");
+    shadowHost.id = "john-mcafee-widget-host";
+    shadowHost.style.cssText = "position: fixed; inset: 0; pointer-events: none; z-index: 2147483000;";
+    document.body.appendChild(shadowHost);
+  }
+  const shadow = shadowHost.shadowRoot || shadowHost.attachShadow({ mode: "open" });
+
+  // Inject styles into shadow root (only once)
+  if (!shadow.getElementById(STYLE_ID)) {
     const style = document.createElement("style");
     style.id = STYLE_ID;
     style.textContent = `
+      :host {
+        font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        color: #e2e8f0;
+        all: initial;
+      }
+
       .john-widget-launcher {
         --john-widget-glow-color: 0,204,255;
         position: fixed;
@@ -63,7 +95,10 @@
         outline: none;
         border: none;
         overflow: visible;
+        contain: layout style paint;
         isolation: isolate;
+        pointer-events: auto;
+        font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       }
 
       .john-widget-launcher::before {
@@ -136,15 +171,16 @@
         left: auto !important;
         margin: 0 !important;
         width: 380px;
+        display: none;
         max-width: calc(100vw - 20px);
         height: 700px;
         max-height: calc(100vh - 60px);
         border-radius: 30px;
-        box-shadow: 
+        box-shadow:
           0 0 40px rgba(0,102,255,0.6),
           0 0 80px rgba(0,102,255,0.4),
           0 0 120px rgba(0,204,255,0.3),
-          0 30px 90px rgba(2,6,23,0.9), 
+          0 30px 90px rgba(2,6,23,0.9),
           inset 0 0 0 1px rgba(0,102,255,0.25);
         display: flex;
         flex-direction: column;
@@ -159,6 +195,8 @@
           rgba(2,6,23,0.94);
         backdrop-filter: blur(28px);
         position: relative;
+        font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        color: #e2e8f0;
       }
 
       .john-widget-panel::before {
@@ -214,6 +252,7 @@
 
       .john-widget-panel.open {
         opacity: 1;
+        display: flex;
         transform: translateY(0);
         pointer-events: all;
       }
@@ -336,7 +375,7 @@
         overflow: hidden;
         position: relative;
         border: 2px solid rgba(0,255,128,0.4);
-        box-shadow: 
+        box-shadow:
           0 0 15px rgba(0,255,128,0.5),
           0 0 30px rgba(0,255,128,0.3),
           inset 0 0 20px rgba(0,255,128,0.2);
@@ -358,7 +397,7 @@
         content: "";
         position: absolute;
         inset: 0;
-        background: 
+        background:
           repeating-linear-gradient(
             0deg,
             transparent,
@@ -390,14 +429,14 @@
 
       @keyframes john-avatar-glow {
         0%, 100% {
-          box-shadow: 
+          box-shadow:
             0 0 15px rgba(0,255,128,0.5),
             0 0 30px rgba(0,255,128,0.3),
             inset 0 0 20px rgba(0,255,128,0.2);
           border-color: rgba(0,255,128,0.4);
         }
         50% {
-          box-shadow: 
+          box-shadow:
             0 0 20px rgba(0,255,128,0.7),
             0 0 40px rgba(0,255,128,0.5),
             inset 0 0 25px rgba(0,255,128,0.3);
@@ -627,7 +666,7 @@
         40% { transform: scale(1); opacity: 1; }
       }
     `;
-    document.head.appendChild(style);
+    shadow.appendChild(style);
   }
 
   function hexToRgbTuple(hex = "") {
@@ -642,30 +681,14 @@
     return `${r},${g},${b}`;
   }
 
-  const WELCOME_MESSAGES = [
-    "John here. Ask me anything—crypto strategy, privacy ops, or the latest digital mischief.",
-    "McAfee here. What do you want to know? Crypto moves, privacy hacks, or how the system really works?",
-    "John speaking. Fire away—crypto intel, privacy tactics, or whatever digital chaos you're curious about.",
-    "You've got John. Crypto insights, privacy strategies, or the truth about what's happening in the digital underground?",
-    "McAfee here. Ready to talk crypto, privacy, or the latest tech that's shaking things up?",
-    "John here. What's on your mind? Crypto plays, privacy tools, or the real story behind the headlines?",
-    "You're talking to John. Crypto strategy, privacy ops, or the digital world's latest moves—what do you need?",
-    "McAfee speaking. Crypto intel, privacy hacks, or the tech that's actually changing the game?",
-    "John here. Ask me about crypto, privacy, or whatever digital frontier you're exploring.",
-    "McAfee here. Crypto moves, privacy tactics, or the latest in digital disruption—what's your question?",
-    "John speaking. Crypto strategy, privacy tools, or the real tech that matters—what do you want to know?",
-    "You've got McAfee. Crypto insights, privacy ops, or the digital underground—fire away."
-  ];
-
   class JohnWidget {
     constructor(options = {}) {
       this.config = { ...DEFAULTS, ...options };
-      // Set dynamic quote if subtitle wasn't provided or is the old default
       if (!this.config.subtitle || this.config.subtitle === "Crypto intel with an edge.") {
         this.config.subtitle = JOHN_MCAFEE_QUOTES[Math.floor(Math.random() * JOHN_MCAFEE_QUOTES.length)];
       }
       this.isOpen = false;
-    this.charLimit = 1000;
+      this.charLimit = 1000;
       const randomWelcome = WELCOME_MESSAGES[Math.floor(Math.random() * WELCOME_MESSAGES.length)];
       this.messages = [
         {
@@ -674,6 +697,7 @@
         }
       ];
       this.endpoint = this.config.endpoint.replace(/\/$/, "");
+      this.shadowRoot = shadow;
     }
 
     mount() {
@@ -703,7 +727,7 @@
       srOnly.textContent = `${this.config.title} chat widget`;
       this.launcher.appendChild(srOnly);
       this.launcher.addEventListener("click", () => this.toggle());
-      document.body.appendChild(this.launcher);
+      this.shadowRoot.appendChild(this.launcher);
     }
 
     createPanel() {
@@ -711,7 +735,6 @@
       this.panel.className = "john-widget-panel";
       this.panel.style.color = this.config.textColor;
 
-      // Create binary rain background
       const binaryRain = document.createElement("div");
       binaryRain.className = "john-binary-rain";
       this.createBinaryRain(binaryRain);
@@ -816,14 +839,13 @@
       this.panel.appendChild(this.messageList);
       this.panel.appendChild(inputWrapper);
 
-      document.body.appendChild(this.panel);
+      this.shadowRoot.appendChild(this.panel);
 
       this.updateCharCount();
       this.setStatus("Ready when you are.");
     }
 
     createBinaryRain(container) {
-      // Wait for panel to be rendered to get actual width
       setTimeout(() => {
         const panelWidth = this.panel.offsetWidth || 380;
         const columnCount = Math.floor(panelWidth / 12);
@@ -834,30 +856,25 @@
           const column = document.createElement("div");
           column.className = "john-binary-column";
           column.style.left = `${i * columnSpacing}px`;
-          
-          // Generate random 0s and 1s
+
           let binaryText = "";
           for (let j = 0; j < charCount; j++) {
             binaryText += (Math.random() > 0.5 ? "0" : "1") + "<br>";
           }
           column.innerHTML = binaryText;
-          
-          // Random animation duration between 12-20 seconds
+
           const duration = 12 + Math.random() * 8;
           column.style.animationDuration = `${duration}s`;
-          
-          // Random delay to create staggered effect
+
           column.style.animationDelay = `${Math.random() * 3}s`;
-          
+
           container.appendChild(column);
         }
 
-        // Update characters constantly and rapidly to create changing effect while falling
         this.binaryRainInterval = setInterval(() => {
           const columns = container.querySelectorAll(".john-binary-column");
           columns.forEach(column => {
             const lines = column.innerHTML.split("<br>").filter(l => l.trim());
-            // Change characters very frequently - 85% chance to change each character
             const newLines = lines.map(() => {
               return Math.random() > 0.5 ? "0" : "1";
             });
@@ -895,7 +912,6 @@
     renderHistory() {
       this.messageList.innerHTML = "";
       this.messages.forEach((message, index) => {
-        // Add timestamp to the first welcome message if it doesn't have one
         const meta = index === 0 && message.role === "assistant" ? { time: this.formatTime(new Date()) } : {};
         this.appendMessage(message, meta);
       });
@@ -906,7 +922,6 @@
       const wrapper = document.createElement("div");
       wrapper.className = `john-widget-message-wrapper ${message.role}-wrapper`;
 
-      // Add avatar for assistant messages
       if (message.role === "assistant" && this.config.assistantAvatar) {
         const avatar = document.createElement("div");
         avatar.className = "john-widget-message-avatar";
@@ -916,7 +931,6 @@
         avatar.appendChild(avatarImg);
         wrapper.appendChild(avatar);
       } else if (message.role === "assistant") {
-        // Add placeholder avatar even if no image is provided
         const avatar = document.createElement("div");
         avatar.className = "john-widget-message-avatar";
         avatar.style.background = "radial-gradient(circle, rgba(0,255,128,0.3), #000)";
@@ -1003,11 +1017,8 @@
 
         const data = await response.json();
         if (!response.ok) {
-          // If validation error, trim conversation history and retry once
           if (response.status === 400 && data?.error?.includes("too long")) {
-            // Keep only the last 4 messages (2 exchanges) to avoid hitting limits
             this.messages = this.messages.slice(-4);
-            // Remove the last message from UI if it was the problematic one
             const lastMessage = this.messageList.lastElementChild;
             if (lastMessage && lastMessage.classList.contains("assistant")) {
               lastMessage.remove();
@@ -1065,4 +1076,3 @@
     }
   };
 })();
-
