@@ -175,7 +175,7 @@ export function formatKnowledgeContext(results: SearchResult[]): string {
     
     // Add situational context if available
     if (entry.context) {
-      text += ` — ${entry.context}`;
+      text += ` (${entry.context})`;
     }
     
     return text;

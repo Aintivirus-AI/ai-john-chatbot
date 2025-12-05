@@ -9,6 +9,7 @@ import { errorHandler } from "./middleware/errorHandler.js";
 import { notFoundHandler } from "./middleware/notFound.js";
 import { healthRouter } from "./routes/health.js";
 import { chatRouter } from "./routes/chat.js";
+import { telegramRouter } from "./routes/telegram.js";
 import { logger } from "./logger.js";
 import { rateLimitMiddleware } from "./middleware/rateLimit.js";
 import { cacheMiddleware } from "./middleware/cache.js";
@@ -56,6 +57,7 @@ app.use(
 app.use(cacheMiddleware);
 app.use("/health", healthRouter);
 app.use("/api/chat", chatRouter);
+app.use("/api/telegram", telegramRouter);
 
 app.use(notFoundHandler);
 app.use(errorHandler);
