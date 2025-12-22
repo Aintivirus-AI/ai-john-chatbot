@@ -665,6 +665,24 @@
         0%, 80%, 100% { transform: scale(0); opacity: 0.4; }
         40% { transform: scale(1); opacity: 1; }
       }
+
+      /* Reduce glow effect on mobile */
+      @media (max-width: 768px) {
+        .john-widget-panel::after {
+          filter: blur(6px);
+          background: radial-gradient(circle at center, rgba(0,102,255,0.08), transparent 70%);
+          inset: -2px;
+        }
+        
+        .john-widget-panel {
+          box-shadow: 
+            0 0 10px rgba(0,102,255,0.3),
+            0 0 20px rgba(0,102,255,0.15),
+            0 0 30px rgba(0,204,255,0.1),
+            0 30px 60px rgba(2,6,23,0.9), 
+            inset 0 0 0 1px rgba(0,102,255,0.25);
+        }
+      }
     `;
     shadow.appendChild(style);
   }
