@@ -23,6 +23,7 @@ const messageSchema = z.object({
 
 const chatRequestSchema = z.object({
   messages: z.array(messageSchema).min(1, "Provide at least one message"),
+  articleContext: z.string().max(2000).optional(),
   useSearch: z.boolean().optional(),
   temperature: z.number().min(0).max(2).optional(),
   maxOutputTokens: z.number().int().min(64).max(2048).optional()
@@ -77,7 +78,7 @@ router.post("/", async (req, res) => {
     });
   }
 
-  const { messages, useSearch, temperature, maxOutputTokens } = parsed.data;
+  const { messages, articleContext, useSearch, temperature, maxOutputTokens } = parsed.data;
   const trimmedMessages = limitMessages(messages);
   const latestUserMessage = [...trimmedMessages].reverse().find((message) => message.role === "user");
   const shouldSearch = useSearch ?? (latestUserMessage ? needsFreshAnswer(latestUserMessage.content) : false);
@@ -86,7 +87,8 @@ router.post("/", async (req, res) => {
     const personaResponse = await getPersonaResponse(trimmedMessages, {
       temperature,
       maxOutputTokens,
-      enableSearch: shouldSearch
+      enableSearch: shouldSearch,
+      articleContext
     });
 
     const shouldCacheResponse =
@@ -115,18 +117,21 @@ async function getPersonaResponse(
     temperature?: number;
     maxOutputTokens?: number;
     enableSearch: boolean;
+    articleContext?: string;
   }
 ): Promise<PersonaResponse> {
   if (options.enableSearch) {
     return searchBackedPersonaResponse(messages, {
       temperature: options.temperature,
-      maxOutputTokens: options.maxOutputTokens
+      maxOutputTokens: options.maxOutputTokens,
+      articleContext: options.articleContext
     });
   }
 
   return generatePersonaResponse(messages, {
     temperature: options.temperature,
-    maxOutputTokens: options.maxOutputTokens
+    maxOutputTokens: options.maxOutputTokens,
+    articleContext: options.articleContext
   });
 }
 

@@ -221,6 +221,7 @@ async function runPersonaPass(
     mode: PersonaMode;
     intel?: string;
     knowledgeContext?: string;
+    articleContext?: string;
     temperature?: number;
     maxOutputTokens?: number;
   }
@@ -237,6 +238,14 @@ async function runPersonaPass(
           : BASE_PERSONA_INSTRUCTION
     }
   ];
+
+  // Add article context if the user is chatting from an article page
+  if (options.articleContext) {
+    systemMessages.push({
+      role: "system",
+      content: `ARTICLE CONTEXT: The user is reading this article on The McAfee Report. Use it to inform your responses:\n\n${options.articleContext}\n\nDiscuss this article naturally when relevant. You are John McAfee commenting on this news.`
+    });
+  }
 
   // Add knowledge base context if available
   if (options.knowledgeContext) {
@@ -259,7 +268,7 @@ async function runPersonaPass(
   const requestMessages = [...systemMessages, ...messages];
 
   // Allow longer responses when we have knowledge context to draw from
-  const hasContext = options.knowledgeContext || options.intel;
+  const hasContext = options.knowledgeContext || options.intel || options.articleContext;
   const defaultMaxTokens = hasContext ? 800 : 400;
 
   const response = await getClient().responses.create({
@@ -298,6 +307,7 @@ export async function generatePersonaResponse(
     temperature?: number;
     maxOutputTokens?: number;
     enableWebSearch?: boolean;
+    articleContext?: string;
   }
 ): Promise<PersonaResponse> {
   ensureApiKey();
@@ -326,6 +336,7 @@ export async function generatePersonaResponse(
       mode: "search",
       intel: intelResult.intel,
       knowledgeContext,
+      articleContext: options?.articleContext,
       temperature: options?.temperature,
       maxOutputTokens: options?.maxOutputTokens
     });
@@ -341,6 +352,7 @@ export async function generatePersonaResponse(
   const personaResult = await runPersonaPass(messages, {
     mode: "default",
     knowledgeContext,
+    articleContext: options?.articleContext,
     temperature: options?.temperature,
     maxOutputTokens: options?.maxOutputTokens
   });

@@ -12,13 +12,15 @@ export async function searchBackedPersonaResponse(
     temperature?: number;
     maxOutputTokens?: number;
     fallbackMessage?: string;
+    articleContext?: string;
   }
 ): Promise<PersonaResponse> {
   try {
     return await generatePersonaResponse(messages, {
       temperature: options?.temperature,
       maxOutputTokens: options?.maxOutputTokens,
-      enableWebSearch: true
+      enableWebSearch: true,
+      articleContext: options?.articleContext
     });
   } catch (error) {
     logger.error({ error }, "Search-backed persona response failed");
