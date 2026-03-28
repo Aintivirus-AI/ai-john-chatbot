@@ -27,20 +27,13 @@ setInterval(() => {
   if (cleaned > 0) {
     logger.debug({ cleaned }, "Cleaned up expired rate limit buckets");
   }
-}, CLEANUP_INTERVAL_MS);
+}, CLEANUP_INTERVAL_MS).unref();
 
 function shouldRateLimit(path: string) {
   return RATE_LIMITED_PATHS.some((regex) => regex.test(path));
 }
 
 function getClientKey(req: Request) {
-  const forwardedFor = req.headers["x-forwarded-for"];
-  if (typeof forwardedFor === "string" && forwardedFor.length > 0) {
-    return forwardedFor.split(",")[0].trim();
-  }
-  if (Array.isArray(forwardedFor) && forwardedFor.length > 0) {
-    return forwardedFor[0];
-  }
   return req.ip || req.socket.remoteAddress || "anonymous";
 }
 

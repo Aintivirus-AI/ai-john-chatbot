@@ -1,3 +1,5 @@
+import crypto from "node:crypto";
+
 import { config } from "../config.js";
 import { logger } from "../logger.js";
 import { generatePersonaResponse } from "./openai.js";
@@ -268,13 +270,23 @@ export async function processUpdate(update: TelegramUpdate): Promise<void> {
  */
 export function validateWebhookSecret(providedSecret: string | undefined): boolean {
   const expectedSecret = config.telegram.webhookSecret;
-  
-  // If no secret configured, allow all (for development)
+
   if (!expectedSecret) {
-    return true;
+    logger.warn("TELEGRAM_WEBHOOK_SECRET is not set — webhook endpoint is unprotected");
+    return false;
   }
 
-  return providedSecret === expectedSecret;
+  if (!providedSecret) {
+    return false;
+  }
+
+  // Use constant-time comparison to prevent timing attacks
+  const provided = Buffer.from(providedSecret);
+  const expected = Buffer.from(expectedSecret);
+  if (provided.length !== expected.length) {
+    return false;
+  }
+  return crypto.timingSafeEqual(provided, expected);
 }
 
 /**

@@ -18,6 +18,8 @@ const envSchema = z.object({
   RATE_LIMIT_MAX: z.coerce.number().int().min(1).default(30),
   CACHE_TTL_SECONDS: z.coerce.number().int().min(30).default(120),
   CACHE_MAX_ENTRIES: z.coerce.number().int().min(10).default(200),
+  // Admin API key for internal endpoints (webhook-info, stats, register-webhook)
+  ADMIN_API_KEY: z.string().optional(),
   // Telegram bot configuration
   TELEGRAM_BOT_TOKEN: z.string().optional(),
   TELEGRAM_WEBHOOK_SECRET: z.string().optional(),
@@ -49,6 +51,7 @@ export const config = {
   nodeEnv: env.NODE_ENV,
   isProduction: env.NODE_ENV === "production",
   port: env.PORT,
+  adminApiKey: env.ADMIN_API_KEY,
   openAiApiKey: env.OPENAI_API_KEY,
   openAiModel: env.OPENAI_MODEL,
   openAiOrgId: env.OPENAI_ORG_ID,

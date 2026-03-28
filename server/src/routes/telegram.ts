@@ -1,3 +1,4 @@
+import type { NextFunction, Request, Response } from "express";
 import { Router } from "express";
 
 import { logger } from "../logger.js";
@@ -12,6 +13,20 @@ import {
 import { getStoreStats } from "../lib/conversationStore.js";
 
 const router = Router();
+
+function requireAdminKey(req: Request, res: Response, next: NextFunction): void {
+  const adminKey = config.adminApiKey;
+  if (!adminKey) {
+    logger.warn({ path: req.path }, "Admin endpoint accessed but ADMIN_API_KEY is not configured");
+    res.status(403).json({ error: "Admin access not configured" });
+    return;
+  }
+  if (req.headers["x-admin-token"] !== adminKey) {
+    res.status(401).json({ error: "Unauthorized" });
+    return;
+  }
+  next();
+}
 
 /**
  * Telegram webhook endpoint
@@ -49,7 +64,7 @@ router.post("/webhook", async (req, res) => {
  * POST /api/telegram/register-webhook
  * Body: { "url": "https://yourdomain.com/api/telegram/webhook" }
  */
-router.post("/register-webhook", async (req, res) => {
+router.post("/register-webhook", requireAdminKey, async (req, res) => {
   // Only allow in development or with proper auth
   if (config.isProduction) {
     return res.status(403).json({ 
@@ -77,7 +92,7 @@ router.post("/register-webhook", async (req, res) => {
  * Get current webhook status
  * GET /api/telegram/webhook-info
  */
-router.get("/webhook-info", async (_req, res) => {
+router.get("/webhook-info", requireAdminKey, async (_req, res) => {
   if (!config.telegram.botToken) {
     return res.status(503).json({ error: "Telegram bot not configured" });
   }
@@ -95,7 +110,7 @@ router.get("/webhook-info", async (_req, res) => {
  * Get conversation store stats
  * GET /api/telegram/stats
  */
-router.get("/stats", (_req, res) => {
+router.get("/stats", requireAdminKey, (_req, res) => {
   const stats = getStoreStats();
   return res.json({
     ...stats,

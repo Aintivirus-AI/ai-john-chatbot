@@ -24,7 +24,7 @@
   ];
 
   const DEFAULTS = {
-    endpoint: "http://localhost:3000/api/chat",
+    endpoint: "/api/chat",
     title: "Chat with John",
     subtitle: null,
     accentColor: "#0066FF",
